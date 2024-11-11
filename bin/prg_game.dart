@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:math';
 
-// 캐릭터 클래스
 class Character {
   String name; // 이름
   int hp; // 체력
@@ -10,19 +9,16 @@ class Character {
 
   Character(this.name, this.hp, this.power, this.defense);
 
-  // 공격 메서드 (몬스터의 체력을 캐릭터의 공격력만큼 감소시킴)
   void attackMonster(Monster monster) {
     monster.hp -= this.power;
     print('${monster.name}에게 ${this.power}의 피해를 입혔습니다.');
   }
 
-  // 방어 메서드 (몬스터가 입힌 데미지만큼 체력을 상승시킴)
   void defend() {
     int monsterDamage = Random().nextInt(10) + 1;
     this.hp += monsterDamage;
   }
 
-  // 상태를 출력하는 메서드 (매턴마다 출력)
   void showStatus() {
     print('현재 체력: ${this.hp}');
     print('현재 공격력: ${this.power}');
@@ -30,25 +26,21 @@ class Character {
   }
 }
 
-
-// 몬스터 클래스
 class Monster {
-  String name; // 이름
-  int hp; // 체력
-  int power; // 공격력 랜덤,단 몬스터의 공격력은 캐릭터의 방어력보다 작을 수 없음
-  int defense = 0; // 방어력 = 0
+  String name;
+  int hp;
+  int power;
+  int defense = 0;
 
   Monster(this.name, this.hp, this.power, this.defense);
 
-  // 공격 메서드
   void attackCharacter(Character character) {
     int damage = Random().nextInt(20) + 1;
-    damage = max(damage, character.defense); // 렌덤값과 캐릭터 방어력 중 큰 값 적용
+    damage = max(damage, character.defense);
     character.hp -= damage;
     print('${character.name}에게 $damage의 피해를 입혔습니다.');
   }
 
-  // 상태를 출력하는 메서드 (매턴마다 출력)
   void showStatus() {
     print('현재 체력: ${this.hp}');
     print('현재 공격력: ${this.power}');
@@ -56,8 +48,6 @@ class Monster {
   }
 }
 
-
-// 게임 클래스
 class Game {
   Character character;
   List<Monster> monsters;
@@ -65,13 +55,11 @@ class Game {
 
   Game(this.character, this.monsters);
 
-  // 랜덤으로 몬스터를 불러오는 메서드
   Monster getRandomMonster() {
     int randomIndex = Random().nextInt(this.monsters.length);
     return this.monsters[randomIndex];
   }
 
-  // 전투를 진행하는 메서드
   Future<void> battle() async {
     await Future.delayed(Duration(seconds: 1));
     Monster currentMonster = getRandomMonster();
@@ -79,10 +67,8 @@ class Game {
     print('새로운 몬스터가 나타났습니다!');
     await Future.delayed(Duration(seconds: 1));
     print('-' * 30);
-    print(
-        '${currentMonster.name} - 체력: ${currentMonster.hp}, 공격력: ${currentMonster.power}');
+    print('${currentMonster.name} - 체력: ${currentMonster.hp}, 공격력: ${currentMonster.power}');
 
-    // 캐릭터와 몬스터가 살아있는 동안 반복
     await Future.delayed(Duration(seconds: 1));
     while (currentMonster.hp > 0 && character.hp > 0) {
       print('행동을 선택하세요. (1: 공격, 2: 방어)');
@@ -93,10 +79,10 @@ class Game {
       switch (actionNumber) {
         case 1:
           print("공격을 선택하셨습니다!");
-          character.attackMonster(currentMonster); // 캐릭터가 몬스터 공격
+          character.attackMonster(currentMonster);
           break;
         case 2:
-          print("방어를 선택하셨습니다!"); // 캐릭터가 방어
+          print("방어를 선택하셨습니다!");
           character.defend();
           break;
         default:
@@ -104,7 +90,6 @@ class Game {
           continue;
       }
 
-      // 캐릭터와 몬스터 상태 출력
       print('*' * 30);
       print('<${character.name}>');
       character.showStatus();
@@ -123,7 +108,6 @@ class Game {
         break;
       }
 
-      // 몬스터의 공격
       await Future.delayed(Duration(seconds: 3));
       print('${currentMonster.name}의 공격!');
       currentMonster.attackCharacter(character);
@@ -131,9 +115,8 @@ class Game {
     }
   }
 
-  // 게임을 시작하는 메서드
   Future<void> startGame() async {
-    while (this.character.hp > 0 && monsters.isNotEmpty) {
+    while (character.hp > 0 && monsters.isNotEmpty) {
       await battle();
       if (character.hp > 0 && monsters.isNotEmpty) {
         print('다음 몬스터와 대결하시겠습니까? (y/n)');
@@ -144,46 +127,77 @@ class Game {
       }
     }
 
-    // 게임 승리 및 패배 여부를 출력
-    if (monsters.isEmpty){
+    bool gameWon = monsters.isEmpty && character.hp > 0;
+
+    if (gameWon) {
       print('모든 몬스터를 물리치고 승리하였습니다.');
-    } else if (this.character.hp <= 0 ){
+    } else if (character.hp <= 0) {
       print('게임에서 패배하였습니다.');
     } else {
       print('게임이 종료되었습니다');
     }
+
+    await saveGameResult(gameWon);
   }
-}    
+
+  Future<void> saveGameResult(bool gameWon) async {
+    print('결과를 저장하시겠습니까? (y/n)');
+    String? response = stdin.readLineSync();
+
+    if (response?.toLowerCase() == 'y') {
+      String result = gameWon ? '승리' : '패배';
+      String content =
+          '캐릭터 이름: ${character.name}\n남은 체력: ${character.hp}\n게임 결과: $result\n';
+
+      File('result.txt').writeAsStringSync(content);
+      print('게임 결과가 result.txt 파일에 저장되었습니다.');
+    } else {
+      print('게임 결과가 저장되지 않았습니다.');
+    }
+  }
+}
+
+Future<Character> loadCharacterFromFile(String name, String filePath) async {
+  List<String> lines = await File(filePath).readAsLines();
+  int hp = int.parse(lines[0]);
+  int power = int.parse(lines[1]);
+  int defense = int.parse(lines[2]);
+
+  return Character(name, hp, power, defense);
+}
+
+Future<List<Monster>> loadMonstersFromFile(String filePath) async {
+  List<String> lines = await File(filePath).readAsLines();
+  List<Monster> monsters = [];
+
+  for (String line in lines) {
+    List<String> parts = line.split(',');
+
+    String name = parts[0];
+    int hp = int.parse(parts[1]);
+    int power = int.parse(parts[2]);
+    int defense = int.parse(parts[3]);
+
+    monsters.add(Monster(name, hp, power, defense));
+  }
+
+  return monsters;
+}
 
 void main() async {
-    // 캐릭터 이름 입력받기
   print('캐릭터의 이름을 입력해주세요.');
   String? characterName = stdin.readLineSync();
 
-  // 유효한 이름이 입력될 때까지 반복
-  while (characterName == null || characterName.isEmpty) {
-    print('캐릭터 이름이 입력되지 않았습니다. 다시 입력해주세요.');
+  while (characterName == null || characterName.isEmpty || !RegExp(r'^[a-zA-Z가-힣]+$').hasMatch(characterName)) {
+    print('잘못된 이름입니다. 다시 입력해주세요.');
     characterName = stdin.readLineSync();
   }
 
-  // 유효한 이름이 입력되었을 때 출력
   print('캐릭터의 이름은 $characterName 입니다. 게임을 시작합니다!');
+  Character character = await loadCharacterFromFile(characterName, 'characters.txt');
+  print('${character.name} - 체력: ${character.hp}, 공격력: ${character.power}, 방어력: ${character.defense}');
 
-  // 캐릭터 객체 생성
-  await Future.delayed(Duration(seconds: 1));
-  Character character = Character(characterName, 50, 10, 5);
-  print(
-      '${character.name} - 체력: ${character.hp}, 공격력: ${character.power}, 방어력: ${character.defense}');
-
-  // 몬스터 객체 생성
-  List<Monster> monsters = [
-    Monster('슬라임', 20, 5, 0),
-    Monster('스파이더', 25, 6, 0),
-    Monster('스켈레톤', 30, 8, 0),
-    Monster('마왕', 50, 15, 0),
-  ];
-
-  // 게임 시작
- Game game = Game(character, monsters);
+  List<Monster> monsters = await loadMonstersFromFile('monsters.txt');
+  Game game = Game(character, monsters);
   await game.startGame();
 }
