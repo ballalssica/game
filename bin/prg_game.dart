@@ -55,11 +55,13 @@ class Game {
 
   Game(this.character, this.monsters);
 
+  // 몬스터를 렌덤으로 뽑는 메서드
   Monster getRandomMonster() {
     int randomIndex = Random().nextInt(this.monsters.length);
     return this.monsters[randomIndex];
   }
 
+  
   Future<void> battle() async {
     await Future.delayed(Duration(seconds: 1));
     Monster currentMonster = getRandomMonster();
@@ -139,7 +141,8 @@ class Game {
 
     await saveGameResult(gameWon);
   }
-
+  
+  // 게임결과 저장하기
   Future<void> saveGameResult(bool gameWon) async {
     print('결과를 저장하시겠습니까? (y/n)');
     String? response = stdin.readLineSync();
@@ -157,6 +160,7 @@ class Game {
   }
 }
 
+// 캐릭터파일 불러오기
 Future<Character> loadCharacterFromFile(String name, String filePath) async {
   List<String> lines = await File(filePath).readAsLines();
   int hp = int.parse(lines[0]);
@@ -166,6 +170,7 @@ Future<Character> loadCharacterFromFile(String name, String filePath) async {
   return Character(name, hp, power, defense);
 }
 
+// 몬스터 파일 불러오기
 Future<List<Monster>> loadMonstersFromFile(String filePath) async {
   List<String> lines = await File(filePath).readAsLines();
   List<Monster> monsters = [];
